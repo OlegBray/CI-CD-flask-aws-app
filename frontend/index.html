@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>My Cool Website</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f6f8;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        padding: 20px;
+      }
+
+      h1 {
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      p {
+        color: #555;
+        font-size: 16px;
+      }
+
+      #name-field {
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        width: 250px;
+      }
+
+      #submit-button {
+        padding: 10px 20px;
+        font-size: 16px;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+      }
+
+      #submit-button:hover {
+        background-color: #0056b3;
+      }
+
+      #message-area {
+        margin-top: 20px;
+        font-weight: bold;
+        font-size: 18px;
+        color: #222;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Welcome!</h1>
+
+    <p>Type in your name here to get an unexpected message.</p>
+
+    <input id="name-field" type="text" placeholder="Your name" />
+    <button id="submit-button">Send to the server!</button>
+
+    <p>Your message from the server:</p>
+    <p id="message-area"></p>
+
+    <script type="text/javascript" src="main.js"></script>
+  </body>
+</html>
