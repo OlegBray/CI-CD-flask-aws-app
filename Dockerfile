@@ -12,6 +12,7 @@ RUN chmod +x /app/flask-app/backend-py/start-server.sh
 
 # Install backend requirements
 RUN pip install --upgrade pip && \
+    pip install --upgrade pip setuptools \
     pip install --no-cache-dir -r /app/flask-app/backend-py/requirements.txt
 
 # Set the default command to run the script
