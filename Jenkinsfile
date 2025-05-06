@@ -1,20 +1,41 @@
 pipeline {
   agent any
+
   environment {
+    // ECR settings
     AWS_REGION    = 'il-central-1'
     ECR_REGISTRY  = '314525640319.dkr.ecr.il-central-1.amazonaws.com'
     ECR_REPO_NAME = 'imtech-oleg'
     IMAGE_TAG     = 'flask-integration-v1'
     DOCKER_IMAGE  = "${ECR_REGISTRY}/${ECR_REPO_NAME}:${IMAGE_TAG}"
-  }
-  stages {
-    stage('Checkout') { steps { checkout scm } }
 
-    stage('Set AWS Credentials') {
+    VAULT_ADDR    = 'http://vault:8200'
+  }
+
+  stages {
+    stage('Checkout') {
       steps {
-        withCredentials([aws(credentialsId: 'aws-imtech-credentials')]) {
-          // AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY are now in env :contentReference[oaicite:1]{index=1}
-          sh 'aws sts get-caller-identity'
+        checkout scm
+      }
+    }
+
+    stage('Retrieve AWS creds from Vault') {
+      steps {
+        // Wrap in withVault to inject secrets as env vars :contentReference[oaicite:0]{index=0}
+        withVault(
+          vaultUrl:       env.VAULT_ADDR,
+          credentialsId:  'vault-token',
+          kvVersion:      2,
+          vaultSecrets: [[
+            path:         'secret/data/aws/pv-key',
+            secretValues: [
+              [vaultKey: 'access_key',     envVar: 'AWS_ACCESS_KEY_ID'],
+              [vaultKey: 'secret_key',     envVar: 'AWS_SECRET_ACCESS_KEY']
+            ]
+          ]]
+        ) {
+          // verify we have creds
+          sh 'echo "Using AWS principal: $(aws sts get-caller-identity --query Arn --output text)"'
         }
       }
     }
@@ -30,7 +51,7 @@ pipeline {
         sh """
           aws ecr get-login-password --region ${AWS_REGION} \
             | docker login --username AWS --password-stdin ${ECR_REGISTRY}
-        """  // use --password-stdin for security :contentReference[oaicite:2]{index=2}
+        """
       }
     }
 
