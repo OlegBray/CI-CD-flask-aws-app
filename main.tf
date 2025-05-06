@@ -25,41 +25,41 @@ data "aws_lb" "existing_lb" {
 }
 
 # Create the CloudWatch Log Group
-resource "aws_cloudwatch_log_group" "nginx_logs" {
-  name              = "/ecs/nginx-logs-oleg"
+resource "aws_cloudwatch_log_group" "flask_integration_logs_oleg" {
+  name              = "/ecs/flask-integration-logs-oleg"
   retention_in_days = 7  # Optional: Set retention policy (e.g., 7 days)
 }
 
 # Recreate the missing target group
-resource "aws_lb_target_group" "nginx_target_group" {
-  name        = "nginx-target-group-oleg"
-  port        = 100
+resource "aws_lb_target_group" "flask_integration_target_group" {
+  name        = "flask-integration-target-group-oleg"
+  port        = 102
   protocol    = "HTTP"
   vpc_id      = data.aws_subnet.subnet_1.vpc_id
   target_type = "ip"
 
   health_check {
     protocol = "HTTP"
-    port     = "100"
+    port     = "102"
     path     = "/"
   }
 }
 
-# Create listener on port 100 (if not already created)
-resource "aws_lb_listener" "nginx_listener" {
+# Create listener on port 102
+resource "aws_lb_listener" "flask_integration_listener" {
   load_balancer_arn = data.aws_lb.existing_lb.arn
-  port              = 100
+  port              = 5000
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.nginx_target_group.arn
+    target_group_arn = aws_lb_target_group.flask_integration_target_group.arn
   }
 }
 
 # Task Definition using ECR image
-resource "aws_ecs_task_definition" "nginx_task" {
-  family                   = "nginx-task-oleg-tf"
+resource "aws_ecs_task_definition" "flask_integration_task" {
+  family                   = "flask-integration-task-oleg-tf"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
@@ -67,32 +67,32 @@ resource "aws_ecs_task_definition" "nginx_task" {
   execution_role_arn       = "arn:aws:iam::314525640319:role/ecsTaskExecutionRole"
 
   container_definitions = jsonencode([{
-    name      = "nginx"
-    image     = "314525640319.dkr.ecr.il-central-1.amazonaws.com/imtech-oleg:latest"
+    name      = "flask"
+    image     = "314525640319.dkr.ecr.il-central-1.amazonaws.com/imtech-oleg:flask-integration-v1"
     essential = true
     portMappings = [
       {
-        containerPort = 80
-        hostPort      = 80
+        containerPort = 5000
+        hostPort      = 5000
         protocol      = "tcp"
       }
     ]
         logConfiguration = {
       logDriver = "awslogs"
       options = {
-        "awslogs-group"         = "/ecs/nginx-logs"
+        "awslogs-group"         = "/ecs/flask-integration-logs-oleg"
         "awslogs-region"        = "il-central-1"
-        "awslogs-stream-prefix" = "nginx"
+        "awslogs-stream-prefix" = "flask"
       }
     }
   }])
 }
 
 # ECS Service using the recreated target group
-resource "aws_ecs_service" "nginx_service" {
-  name            = "nginx-service-oleg"
+resource "aws_ecs_service" "flask_service" {
+  name            = "flask-service-oleg"
   cluster         = data.aws_ecs_cluster.existing_cluster.id
-  task_definition = aws_ecs_task_definition.nginx_task.arn
+  task_definition = aws_ecs_task_definition.flask_task.arn
   desired_count   = 1
   launch_type     = "FARGATE"
 
@@ -103,12 +103,12 @@ resource "aws_ecs_service" "nginx_service" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.nginx_target_group.arn
-    container_name   = "nginx"
-    container_port   = 80
+    target_group_arn = aws_lb_target_group.flask_integration_target_group.arn
+    container_name   = "flask"
+    container_port   = 102
   }
 
   depends_on = [
-    aws_lb_listener.nginx_listener
+    aws_lb_listener.flask_integration_listener
   ]
 }
