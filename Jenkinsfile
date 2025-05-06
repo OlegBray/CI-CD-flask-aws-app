@@ -9,6 +9,7 @@ pipeline {
     IMAGE_TAG     = 'flask-integration-v1'
     DOCKER_IMAGE  = "${ECR_REGISTRY}/${ECR_REPO_NAME}:${IMAGE_TAG}"
 
+    // Vault address
     VAULT_ADDR    = 'http://vault:8200'
   }
 
@@ -21,22 +22,14 @@ pipeline {
 
     stage('Retrieve AWS creds from Vault') {
       steps {
-        // Wrap in withVault to inject secrets as env vars :contentReference[oaicite:0]{index=0}
-        withVault(
-          vaultUrl:       env.VAULT_ADDR,
-          credentialsId:  'vault-token',
-          kvVersion:      2,
-          vaultSecrets: [[
-            path:         'secret/data/aws/pv-key',
-            secretValues: [
-              [vaultKey: 'access_key',     envVar: 'AWS_ACCESS_KEY_ID'],
-              [vaultKey: 'secret_key',     envVar: 'AWS_SECRET_ACCESS_KEY']
-            ]
-          ]]
-        ) {
-          // verify we have creds
-          sh 'echo "Using AWS principal: $(aws sts get-caller-identity --query Arn --output text)"'
-        }
+        // This 'vault' step comes from the HashiCorp Vault Plugin
+        vault path: 'secret/data/aws/pv-key', engineVersion: 2, secretValues: [
+          [vaultKey: 'access_key', envVar: 'AWS_ACCESS_KEY_ID'],
+          [vaultKey: 'secret_key', envVar: 'AWS_SECRET_ACCESS_KEY']
+        ]
+
+        // Verify we have credentials
+        sh 'echo "Using AWS principal: $(aws sts get-caller-identity --query Arn --output text)"'
       }
     }
 
