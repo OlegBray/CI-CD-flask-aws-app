@@ -2,32 +2,29 @@ pipeline {
   agent any
 
   environment {
-    AWS_REGION    = 'il-central-1'
-    ECR_REGISTRY  = '314525640319.dkr.ecr.il-central-1.amazonaws.com'
-    ECR_REPO_NAME = 'imtech-oleg'
-    IMAGE_TAG     = 'flask-integration-v1'
-    DOCKER_IMAGE  = "${ECR_REGISTRY}/${ECR_REPO_NAME}:${IMAGE_TAG}"
-    VAULT_ADDR    = 'http://vault:8200'
+    // ECR settings
+    AWS_REGION           = 'il-central-1'
+    ECR_REGISTRY         = '314525640319.dkr.ecr.il-central-1.amazonaws.com'
+    ECR_REPO_NAME        = 'imtech-oleg'
+    IMAGE_TAG            = 'flask-integration-v1'
+    DOCKER_IMAGE         = "${ECR_REGISTRY}/${ECR_REPO_NAME}:${IMAGE_TAG}"
+
+    // Vault‑injected AWS creds (KV‑v2)
+    AWS_ACCESS_KEY_ID     = vault path: 'secret/data/aws/pv-key', key: 'access_key', engineVersion: '2', credentialsId: 'vault-cred'    // :contentReference[oaicite:1]{index=1}
+    AWS_SECRET_ACCESS_KEY = vault path: 'secret/data/aws/pv-key', key: 'secret_key', engineVersion: '2', credentialsId: 'vault-cred'    // :contentReference[oaicite:2]{index=2}
   }
 
   stages {
     stage('Checkout') {
-      steps { checkout scm }
+      steps {
+        checkout scm
+      }
     }
 
-    stage('Retrieve AWS creds from Vault') {
+    stage('Verify AWS Identity') {
       steps {
-        // Correct vault step usage :contentReference[oaicite:10]{index=10}
-        vault(
-          path:          'secret/data/aws/pv-key',
-          engineVersion: '2',
-          credentialsId: 'vault-cred',
-          secretValues: [
-            [vaultKey: 'access_key', envVar: 'AWS_ACCESS_KEY_ID'],
-            [vaultKey: 'secret_key', envVar: 'AWS_SECRET_ACCESS_KEY']
-          ]
-        )
-        sh 'echo "Using AWS principal: $(aws sts get-caller-identity --query Arn --output text)"'
+        // will use the vars injected above
+        sh 'echo "AWS caller: $(aws sts get-caller-identity --query Arn --output text)"'
       }
     }
 
