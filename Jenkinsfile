@@ -21,7 +21,6 @@ pipeline {
       }
     }
 
-      stages {
     stage('Debug AWS Identity') {
       steps {
         sh 'echo "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}"'
