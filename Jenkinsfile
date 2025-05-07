@@ -10,8 +10,8 @@ pipeline {
     DOCKER_IMAGE         = "${ECR_REGISTRY}/${ECR_REPO_NAME}:${IMAGE_TAG}"
 
     // Vault‑injected AWS creds (KV‑v2)
-    AWS_ACCESS_KEY_ID     = vault path: 'secret/data/aws/pv-key', key: 'access_key', engineVersion: '2', credentialsId: 'vault-cred'    // :contentReference[oaicite:1]{index=1}
-    AWS_SECRET_ACCESS_KEY = vault path: 'secret/data/aws/pv-key', key: 'secret_key', engineVersion: '2', credentialsId: 'vault-cred'    // :contentReference[oaicite:2]{index=2}
+    AWS_ACCESS_KEY_ID     = vault path: 'secret/data/aws/creds', key: 'access_key', engineVersion: '2', credentialsId: 'vault-cred'    // :contentReference[oaicite:1]{index=1}
+    AWS_SECRET_ACCESS_KEY = vault path: 'secret/data/aws/creds', key: 'secret_key', engineVersion: '2', credentialsId: 'vault-cred'    // :contentReference[oaicite:2]{index=2}
   }
 
   stages {
