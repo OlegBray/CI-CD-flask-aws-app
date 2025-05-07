@@ -21,6 +21,14 @@ pipeline {
       }
     }
 
+      stages {
+    stage('Debug AWS Identity') {
+      steps {
+        sh 'echo "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}"'
+        sh 'aws sts get-caller-identity --query Arn --output text'
+      }
+    }
+
     stage('Verify AWS Identity') {
       steps {
         // will use the vars injected above
