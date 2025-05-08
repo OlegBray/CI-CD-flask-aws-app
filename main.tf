@@ -32,7 +32,7 @@ resource "aws_cloudwatch_log_group" "flask_integration_logs_oleg" {
 
 # Recreate the missing target group
 resource "aws_lb_target_group" "flask_integration_target_group" {
-  name        = "flask-integration-target-group-oleg"
+  name        = "flask-target-group-oleg"
   port        = 102
   protocol    = "HTTP"
   vpc_id      = data.aws_subnet.subnet_1.vpc_id
@@ -53,7 +53,7 @@ resource "aws_lb_listener" "flask_integration_listener" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.flask_integration_target_group.arn
+    target_group_arn = aws_lb_target_group.flask_target_group.arn
   }
 }
 
@@ -103,7 +103,7 @@ resource "aws_ecs_service" "flask_service" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.flask_integration_target_group.arn
+    target_group_arn = aws_lb_target_group.flask_target_group.arn
     container_name   = "flask"
     container_port   = 102
   }
