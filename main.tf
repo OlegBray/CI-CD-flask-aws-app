@@ -2,6 +2,11 @@ provider "aws" {
   region = "il-central-1"
 }
 
+variable "image_tag" {
+  description = "Docker image tag"
+  type        = string
+}
+
 locals {
   subnets = [
     "subnet-088b7d937a4cd5d85",
@@ -9,30 +14,25 @@ locals {
   ]
 }
 
-# Use one subnet to retrieve VPC ID
 data "aws_subnet" "subnet_1" {
   id = local.subnets[0]
 }
 
-# Reference existing ECS cluster
 data "aws_ecs_cluster" "existing_cluster" {
   cluster_name = "imtech"
 }
 
-# Reference existing ALB
 data "aws_lb" "existing_lb" {
   name = "imtec"
 }
 
-# Create the CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "flask_integration_logs_oleg" {
   name              = "/ecs/flask-integration-logs-oleg"
   retention_in_days = 7
 }
 
-# Corrected target group with port 5000
 resource "aws_lb_target_group" "flask_target_group" {
-  name        = "flask-target-group-oleg"
+  name        = "flask-target-group-oleg" # under 32 characters
   port        = 5000
   protocol    = "HTTP"
   vpc_id      = data.aws_subnet.subnet_1.vpc_id
@@ -45,7 +45,6 @@ resource "aws_lb_target_group" "flask_target_group" {
   }
 }
 
-# Listener on ALB pointing to target group
 resource "aws_lb_listener" "flask_integration_listener" {
   load_balancer_arn = data.aws_lb.existing_lb.arn
   port              = 5000
@@ -57,7 +56,6 @@ resource "aws_lb_listener" "flask_integration_listener" {
   }
 }
 
-# Task definition referencing correct image and port
 resource "aws_ecs_task_definition" "flask_task" {
   family                   = "flask-integration-task-oleg-tf"
   network_mode             = "awsvpc"
@@ -68,7 +66,7 @@ resource "aws_ecs_task_definition" "flask_task" {
 
   container_definitions = jsonencode([{
     name      = "flask"
-    image     = "314525640319.dkr.ecr.il-central-1.amazonaws.com/imtech-oleg:${BUILD_NUMBER}"
+    image     = "314525640319.dkr.ecr.il-central-1.amazonaws.com/imtech-oleg:${var.image_tag}"
     essential = true
     portMappings = [
       {
@@ -88,7 +86,6 @@ resource "aws_ecs_task_definition" "flask_task" {
   }])
 }
 
-# ECS service referencing correct port and target group
 resource "aws_ecs_service" "flask_service" {
   name            = "flask-service-oleg"
   cluster         = data.aws_ecs_cluster.existing_cluster.id
