@@ -8,11 +8,13 @@ pipeline {
   }
 
   stages {
-    // stage('Clone Code') {
-    //   steps {
-    //     git branch: 'main', url: 'https://github.com/LironBinyamin96/CI-CD-flask-app-aws.git'
-    //   }
-    // }
+    /*
+    stage('Clone Code') {
+      steps {
+        git branch: 'main', url: 'https://github.com/LironBinyamin96/CI-CD-flask-app-aws.git'
+      }
+    }
+    */
 
     stage('Login to ECR') {
       steps {
@@ -27,15 +29,17 @@ pipeline {
         sh "docker build -t ${DOCKER_IMAGE} ."
       }
     }
-
-    // stage('Login to ECR') {
-    //   steps {
-    //     sh """
-    //       aws ecr get-login-password --region ${AWS_REGION} \
-    //         | docker login --username AWS --password-stdin ${ECR_REGISTRY}
-    //     """
-    //   }
-    // }
+    
+    /*
+    stage('Login to ECR') {
+      steps {
+        sh """
+          aws ecr get-login-password --region ${AWS_REGION} \
+            | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+        """
+      }
+    }
+    */
 
     stage('Push to ECR') {
       steps {
