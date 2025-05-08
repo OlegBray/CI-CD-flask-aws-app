@@ -27,25 +27,25 @@ data "aws_lb" "existing_lb" {
 # Create the CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "flask_integration_logs_oleg" {
   name              = "/ecs/flask-integration-logs-oleg"
-  retention_in_days = 7  # Optional: Set retention policy (e.g., 7 days)
+  retention_in_days = 7
 }
 
-# Recreate the missing target group
+# Target Group (shortened name)
 resource "aws_lb_target_group" "flask_integration_target_group" {
-  name        = "flask-target-group-oleg"
-  port        = 102
+  name        = "flask-tg-oleg"
+  port        = 5000
   protocol    = "HTTP"
   vpc_id      = data.aws_subnet.subnet_1.vpc_id
   target_type = "ip"
 
   health_check {
     protocol = "HTTP"
-    port     = "102"
+    port     = "5000"
     path     = "/"
   }
 }
 
-# Create listener on port 102
+# Listener
 resource "aws_lb_listener" "flask_integration_listener" {
   load_balancer_arn = data.aws_lb.existing_lb.arn
   port              = 5000
@@ -53,11 +53,11 @@ resource "aws_lb_listener" "flask_integration_listener" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.flask_target_group.arn
+    target_group_arn = aws_lb_target_group.flask_integration_target_group.arn
   }
 }
 
-# Task Definition using ECR image
+# Task Definition
 resource "aws_ecs_task_definition" "flask_integration_task" {
   family                   = "flask-integration-task-oleg-tf"
   network_mode             = "awsvpc"
@@ -77,7 +77,7 @@ resource "aws_ecs_task_definition" "flask_integration_task" {
         protocol      = "tcp"
       }
     ]
-        logConfiguration = {
+    logConfiguration = {
       logDriver = "awslogs"
       options = {
         "awslogs-group"         = "/ecs/flask-integration-logs-oleg"
@@ -88,11 +88,11 @@ resource "aws_ecs_task_definition" "flask_integration_task" {
   }])
 }
 
-# ECS Service using the recreated target group
+# ECS Service
 resource "aws_ecs_service" "flask_service" {
   name            = "flask-service-oleg"
   cluster         = data.aws_ecs_cluster.existing_cluster.id
-  task_definition = aws_ecs_task_definition.flask_task.arn
+  task_definition = aws_ecs_task_definition.flask_integration_task.arn
   desired_count   = 1
   launch_type     = "FARGATE"
 
@@ -103,9 +103,9 @@ resource "aws_ecs_service" "flask_service" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.flask_target_group.arn
+    target_group_arn = aws_lb_target_group.flask_integration_target_group.arn
     container_name   = "flask"
-    container_port   = 102
+    container_port   = 5000
   }
 
   depends_on = [
