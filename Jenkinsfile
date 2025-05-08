@@ -29,20 +29,21 @@ pipeline {
         sh "docker push ${DOCKER_IMAGE}"
       }
     }
+
+    stage('Run Terraform') {
+      steps {
+        sh '''
+          terraform init
+          terraform validate
+          terraform apply -auto-approve
+        '''
+      }
+    }
   }
 
   post {
     always {
       sh 'unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN'
     }
-  }
-
-  stage('Run Terraform') {
-  steps {
-    sh '''
-      terraform init
-      terraform validate
-      terraform apply -auto-approve
-    '''
   }
 }
