@@ -35,7 +35,7 @@ pipeline {
         sh '''
           terraform init
           terraform validate
-          terraform apply -auto-approve
+          terraform apply -auto-approve -var="image_tag=${BUILD_NUMBER}"
         '''
       }
     }
